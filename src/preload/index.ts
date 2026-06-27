@@ -44,6 +44,12 @@ const api: TaylorMindApi = {
     return () => ipcRenderer.removeListener('ai:loadprogress', handler)
   },
 
+  onOpenFile: (cb: (result: { path: string; map: MindMap }) => void) => {
+    const handler = (_e: unknown, payload: { path: string; map: MindMap }): void => cb(payload)
+    ipcRenderer.on('map:open-file', handler)
+    return () => ipcRenderer.removeListener('map:open-file', handler)
+  },
+
   localEngineStatus: () => ipcRenderer.invoke('ai:status') as ReturnType<
     TaylorMindApi['localEngineStatus']
   >,

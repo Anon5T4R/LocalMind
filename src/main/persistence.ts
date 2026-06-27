@@ -2,6 +2,12 @@ import { promises as fs } from 'fs'
 import { dialog } from 'electron'
 import type { MindMap } from '../shared/types'
 
+export async function openMapFromPath(path: string): Promise<{ path: string; map: MindMap }> {
+  const raw = await fs.readFile(path, 'utf8')
+  const map = JSON.parse(raw) as MindMap
+  return { path, map }
+}
+
 export async function openMap(): Promise<{ path: string; map: MindMap } | null> {
   const res = await dialog.showOpenDialog({
     title: 'Abrir mapa',

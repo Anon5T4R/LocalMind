@@ -34,11 +34,20 @@
       "package.json"
     ],
     "win": {
+      "icon": "build/icon.ico",
       "target": [
         "portable",
         "nsis"
       ]
     },
+    "fileAssociations": [
+      {
+        "ext": "tmind",
+        "name": "TaylorMind Mind Map",
+        "description": "TaylorMind Mind Map",
+        "role": "Editor"
+      }
+    ],
     "portable": {
       "artifactName": "TaylorMind-${version}-portable.exe"
     },
@@ -47,6 +56,7 @@
       "allowToChangeInstallationDirectory": true
     },
     "linux": {
+      "icon": "build/icon.png",
       "target": [
         "AppImage"
       ],

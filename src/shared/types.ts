@@ -132,6 +132,7 @@ export interface TaylorMindApi {
   onChunk(cb: (chunk: StreamChunk) => void): () => void
   onDone(cb: (done: StreamDone) => void): () => void
   onLoadProgress(cb: (p: LoadProgress) => void): () => void
+  onOpenFile(cb: (result: { path: string; map: MindMap }) => void): () => void
   // Engine status
   localEngineStatus(): Promise<{ loaded: boolean; modelPath?: string; loading: boolean }>
   loadLocalModel(): Promise<{ ok: boolean; error?: string }>

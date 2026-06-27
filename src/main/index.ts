@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, nativeImage } from 'electron'
 import { join } from 'path'
 import type { AppSettings, EngineKind, GenerateRequest, MindMap } from '../shared/types'
 import {
@@ -8,7 +8,7 @@ import {
   hasApiKey
 } from './settings'
 import { listLocalModels, pickModelFile } from './models'
-import { openMap, saveMap, exportFile } from './persistence'
+import { openMap, openMapFromPath, saveMap, exportFile } from './persistence'
 import {
   runGenerate,
   cancelGenerate,
@@ -19,7 +19,26 @@ import {
 
 let mainWindow: BrowserWindow | null = null
 
-function createWindow(): void {
+function getTmindArgv(argv: string[]): string | null {
+  // In packaged apps argv[0] is the exe; in dev argv[0] is electron, argv[1] is the script.
+  // The file path is always the last argument that ends with .tmind.
+  for (let i = argv.length - 1; i >= 0; i--) {
+    if (argv[i].toLowerCase().endsWith('.tmind')) return argv[i]
+  }
+  return null
+}
+
+function sendOpenFile(filePath: string): void {
+  if (!mainWindow) return
+  openMapFromPath(filePath)
+    .then((result) => mainWindow?.webContents.send('map:open-file', result))
+    .catch(() => {/* ignore bad file */})
+}
+
+function createWindow(initialFile?: string | null): void {
+  const iconPath = join(__dirname, '../../build/icon.ico')
+  const icon = nativeImage.createFromPath(iconPath)
+
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 820,
@@ -29,6 +48,7 @@ function createWindow(): void {
     backgroundColor: '#0f1115',
     title: 'TaylorMind',
     autoHideMenuBar: true,
+    icon: icon.isEmpty() ? undefined : icon,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
@@ -36,7 +56,10 @@ function createWindow(): void {
     }
   })
 
-  mainWindow.on('ready-to-show', () => mainWindow?.show())
+  mainWindow.on('ready-to-show', () => {
+    mainWindow?.show()
+    if (initialFile) sendOpenFile(initialFile)
+  })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
@@ -90,15 +113,31 @@ function registerIpc(): void {
   })
 }
 
-app.whenReady().then(() => {
-  registerIpc()
-  createWindow()
-
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+// Single-instance: if another instance tries to open, redirect here and focus.
+const gotLock = app.requestSingleInstanceLock()
+if (!gotLock) {
+  app.quit()
+} else {
+  app.on('second-instance', (_event, argv) => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore()
+      mainWindow.focus()
+      const filePath = getTmindArgv(argv)
+      if (filePath) sendOpenFile(filePath)
+    }
   })
-})
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit()
-})
+  app.whenReady().then(() => {
+    registerIpc()
+    const initialFile = getTmindArgv(process.argv)
+    createWindow(initialFile)
+
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    })
+  })
+
+  app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') app.quit()
+  })
+}

@@ -188,6 +188,12 @@ function Canvas(): JSX.Element {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
+  // Open file passed via OS file association (double-click or second-instance).
+  const setMap = useMap((s) => s.setMap)
+  useEffect(() => {
+    return window.taylormind.onOpenFile(({ path, map }) => setMap(map, path))
+  }, [setMap])
+
   // Re-fit when the node count changes substantially (new map, generation).
   const nodeCount = map.nodes.length
   useEffect(() => {
