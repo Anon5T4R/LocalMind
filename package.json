@@ -1,6 +1,6 @@
 {
   "name": "taylormind",
-  "version": "0.1.0",
+  "version": "0.2.1",
   "description": "AI-powered mind mapping (XMind/SimpleMind clone) with local & remote LLMs",
   "main": "./out/main/index.js",
   "author": "joaof",
