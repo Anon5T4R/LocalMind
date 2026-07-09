@@ -107,7 +107,7 @@ export interface LocalModelInfo {
 }
 
 /** API exposed to the renderer via the preload bridge. */
-export interface TaylorMindApi {
+export interface LocalMindApi {
   // Settings
   getSettings(): Promise<AppSettings>
   setSettings(patch: Partial<AppSettings>): Promise<AppSettings>

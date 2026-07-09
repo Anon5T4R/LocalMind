@@ -1,6 +1,6 @@
 {
-  "name": "taylormind",
-  "version": "0.2.1",
+  "name": "localmind",
+  "version": "0.3.0",
   "description": "AI-powered mind mapping (XMind/SimpleMind clone) with local & remote LLMs",
   "main": "./out/main/index.js",
   "author": "joaof",
@@ -17,8 +17,8 @@
     "dist:linux": "electron-vite build && electron-builder --linux"
   },
   "build": {
-    "appId": "com.taylormind.app",
-    "productName": "TaylorMind",
+    "appId": "com.localmind.app",
+    "productName": "LocalMind",
     "directories": {
       "output": "release",
       "buildResources": "build"
@@ -43,13 +43,13 @@
     "fileAssociations": [
       {
         "ext": "tmind",
-        "name": "TaylorMind Mind Map",
-        "description": "TaylorMind Mind Map",
+        "name": "LocalMind Mind Map",
+        "description": "LocalMind Mind Map",
         "role": "Editor"
       }
     ],
     "portable": {
-      "artifactName": "TaylorMind-${version}-portable.exe"
+      "artifactName": "LocalMind-${version}-portable.exe"
     },
     "nsis": {
       "oneClick": false,

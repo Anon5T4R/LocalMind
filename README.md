@@ -1,4 +1,6 @@
-# TaylorMind
+# LocalMind
+
+> Antes chamado TaylorMind — renomeado para combinar com a suíte LocalMind. Os arquivos continuam usando a extensão `.tmind`.
 
 Clone de XMind/SimpleMind com IA — desktop (Electron + React + TypeScript). Roda modelos **locais** (arquivos `.gguf` via `node-llama-cpp`, sem precisar de LM Studio aberto) ou provedores **remotos** (Anthropic, OpenAI, Gemini, OpenAI-compatible) com a sua própria API key.
 

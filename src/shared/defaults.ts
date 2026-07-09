@@ -12,7 +12,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   localGpuLayers: -1,
   anthropic: { model: 'claude-opus-4-8' },
   openai: { model: 'gpt-4o' },
-  gemini: { model: 'gemini-1.5-pro' },
+  gemini: { model: 'gemini-2.5-flash' },
   openaiCompatible: { baseUrl: 'http://localhost:1234/v1', model: 'local-model' },
   temperature: 0.7
 }

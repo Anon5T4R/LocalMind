@@ -6,7 +6,7 @@ import { useMap } from '../store'
 import type { ChatMessage } from '@shared/types'
 
 const CHAT_SYSTEM =
-  'Você é um assistente dentro de um app de mapas mentais (TaylorMind). ' +
+  'Você é um assistente dentro de um app de mapas mentais (LocalMind). ' +
   'Responda em português do Brasil, de forma clara e organizada. ' +
   'Use listas e tópicos quando ajudar. Pode sugerir estruturas de mapa mental.'
 
@@ -36,7 +36,7 @@ export function ChatPanel({ onClose }: Props): JSX.Element {
 
   // Show local model load progress in the composer.
   useEffect(() => {
-    return window.taylormind.onLoadProgress(({ progress, phase }) => {
+    return window.localmind.onLoadProgress(({ progress, phase }) => {
       setStatus(
         phase === 'context'
           ? progress >= 1

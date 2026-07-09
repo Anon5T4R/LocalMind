@@ -20,13 +20,13 @@ let wired = false
 function ensureWired(): void {
   if (wired) return
   wired = true
-  window.taylormind.onChunk(({ requestId, delta }) => {
+  window.localmind.onChunk(({ requestId, delta }) => {
     const p = pending.get(requestId)
     if (!p) return
     p.full += delta
     p.opts.onText?.(delta, p.full)
   })
-  window.taylormind.onDone(({ requestId, text, error }) => {
+  window.localmind.onDone(({ requestId, text, error }) => {
     const p = pending.get(requestId)
     if (!p) return
     pending.delete(requestId)
@@ -42,10 +42,10 @@ export function runAI(messages: ChatMessage[], opts: RunOptions = {}): Promise<s
     pending.set(requestId, { full: '', opts, resolve, reject })
     if (opts.signal) {
       opts.signal.addEventListener('abort', () => {
-        window.taylormind.cancel(requestId)
+        window.localmind.cancel(requestId)
       })
     }
-    window.taylormind
+    window.localmind
       .generate({
         requestId,
         messages,

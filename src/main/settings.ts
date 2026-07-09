@@ -1,5 +1,7 @@
-import { safeStorage } from 'electron'
+import { app, safeStorage } from 'electron'
 import Store from 'electron-store'
+import { copyFileSync, existsSync, mkdirSync } from 'fs'
+import { dirname, join } from 'path'
 import type { AppSettings, EngineKind } from '../shared/types'
 import { DEFAULT_SETTINGS } from '../shared/defaults'
 
@@ -9,8 +11,33 @@ type Persisted = {
   keys: Partial<Record<Exclude<EngineKind, 'local'>, string>>
 }
 
+// One-time migration from the TaylorMind era: the rename moved userData
+// (…/TaylorMind → …/LocalMind) and the store file (taylormind.json → localmind.json).
+// safeStorage (DPAPI) is per-user, so copied API keys still decrypt.
+function migrateLegacyStore(): void {
+  try {
+    const userData = app.getPath('userData')
+    const target = join(userData, 'localmind.json')
+    if (existsSync(target)) return
+    const appData = dirname(userData)
+    const candidates = [
+      join(userData, 'taylormind.json'),
+      join(appData, 'TaylorMind', 'taylormind.json'),
+      join(appData, 'taylormind', 'taylormind.json')
+    ]
+    const source = candidates.find((p) => existsSync(p))
+    if (source) {
+      mkdirSync(userData, { recursive: true })
+      copyFileSync(source, target)
+    }
+  } catch {
+    // Best-effort: worst case the user starts with default settings.
+  }
+}
+migrateLegacyStore()
+
 const store = new Store<Persisted>({
-  name: 'taylormind',
+  name: 'localmind',
   defaults: { settings: DEFAULT_SETTINGS, keys: {} }
 })
 

@@ -13,15 +13,20 @@ export async function openMap(): Promise<{ path: string; map: MindMap } | null> 
     title: 'Abrir mapa',
     properties: ['openFile'],
     filters: [
-      { name: 'TaylorMind', extensions: ['tmind', 'json'] },
+      { name: 'LocalMind', extensions: ['tmind', 'json'] },
       { name: 'Todos', extensions: ['*'] }
     ]
   })
   if (res.canceled || res.filePaths.length === 0) return null
   const path = res.filePaths[0]
-  const raw = await fs.readFile(path, 'utf8')
-  const map = JSON.parse(raw) as MindMap
-  return { path, map }
+  try {
+    const raw = await fs.readFile(path, 'utf8')
+    const map = JSON.parse(raw) as MindMap
+    return { path, map }
+  } catch {
+    dialog.showErrorBox('Arquivo inválido', `Não foi possível abrir "${path}" como mapa mental.`)
+    return null
+  }
 }
 
 export async function exportFile(
@@ -46,7 +51,7 @@ export async function saveMap(map: MindMap, path?: string): Promise<string | nul
     const res = await dialog.showSaveDialog({
       title: 'Salvar mapa',
       defaultPath: `${map.title || 'mapa'}.tmind`,
-      filters: [{ name: 'TaylorMind', extensions: ['tmind'] }]
+      filters: [{ name: 'LocalMind', extensions: ['tmind'] }]
     })
     if (res.canceled || !res.filePath) return null
     target = res.filePath

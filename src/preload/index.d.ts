@@ -1,8 +1,8 @@
-import type { TaylorMindApi } from '../shared/types'
+import type { LocalMindApi } from '../shared/types'
 
 declare global {
   interface Window {
-    taylormind: TaylorMindApi
+    localmind: LocalMindApi
   }
 }
 

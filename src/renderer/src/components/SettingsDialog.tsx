@@ -27,12 +27,12 @@ export function SettingsDialog({ onClose }: Props): JSX.Element {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    window.taylormind.getSettings().then(setSettings)
+    window.localmind.getSettings().then(setSettings)
     refreshModels()
     for (const p of ['anthropic', 'openai', 'gemini', 'openai-compatible'] as const) {
-      window.taylormind.hasApiKey(p).then((has) => setKeyStatus((s) => ({ ...s, [p]: has })))
+      window.localmind.hasApiKey(p).then((has) => setKeyStatus((s) => ({ ...s, [p]: has })))
     }
-    return window.taylormind.onLoadProgress(({ progress, phase }) => {
+    return window.localmind.onLoadProgress(({ progress, phase }) => {
       setLoadMsg(
         phase === 'context'
           ? progress >= 1
@@ -46,7 +46,7 @@ export function SettingsDialog({ onClose }: Props): JSX.Element {
   const handleLoad = async (): Promise<void> => {
     setLoading(true)
     setLoadMsg('Iniciando…')
-    const res = await window.taylormind.loadLocalModel()
+    const res = await window.localmind.loadLocalModel()
     setLoading(false)
     if (!res.ok) setLoadMsg('⚠ ' + (res.error ?? 'Falha ao carregar'))
     else setLoadMsg('✓ Modelo carregado')
@@ -55,20 +55,20 @@ export function SettingsDialog({ onClose }: Props): JSX.Element {
   const refreshModels = async (): Promise<void> => {
     setLoadingModels(true)
     try {
-      setModels(await window.taylormind.listLocalModels())
+      setModels(await window.localmind.listLocalModels())
     } finally {
       setLoadingModels(false)
     }
   }
 
   const patch = async (p: Partial<AppSettings>): Promise<void> => {
-    const next = await window.taylormind.setSettings(p)
+    const next = await window.localmind.setSettings(p)
     setSettings(next)
   }
 
   const saveKey = async (provider: Exclude<EngineKind, 'local'>): Promise<void> => {
     const key = keyInputs[provider] ?? ''
-    await window.taylormind.setApiKey(provider, key)
+    await window.localmind.setApiKey(provider, key)
     setKeyInputs((s) => ({ ...s, [provider]: '' }))
     setKeyStatus((s) => ({ ...s, [provider]: Boolean(key) }))
   }
@@ -128,7 +128,7 @@ export function SettingsDialog({ onClose }: Props): JSX.Element {
                 </button>
                 <button
                   onClick={async () => {
-                    const p = await window.taylormind.pickModelFile()
+                    const p = await window.localmind.pickModelFile()
                     if (p) patch({ localModelPath: p })
                   }}
                 >
@@ -173,7 +173,7 @@ export function SettingsDialog({ onClose }: Props): JSX.Element {
               <button
                 disabled={loading}
                 onClick={async () => {
-                  await window.taylormind.unloadLocalModel()
+                  await window.localmind.unloadLocalModel()
                   setLoadMsg('Modelo descarregado')
                 }}
                 title="Libera a RAM/VRAM. Trocar de modelo já faz isso automaticamente."

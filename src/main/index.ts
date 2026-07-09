@@ -46,7 +46,7 @@ function createWindow(initialFile?: string | null): void {
     minHeight: 600,
     show: false,
     backgroundColor: '#0f1115',
-    title: 'TaylorMind',
+    title: 'LocalMind',
     autoHideMenuBar: true,
     icon: icon.isEmpty() ? undefined : icon,
     webPreferences: {

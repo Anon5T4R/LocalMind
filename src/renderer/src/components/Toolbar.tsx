@@ -45,12 +45,9 @@ export function Toolbar({
   const canUndo = useMap((s) => s.past.length > 0)
   const canRedo = useMap((s) => s.future.length > 0)
 
+  // Poll the engine + local model status so the label reflects changes made in
+  // the settings dialog and shows whether a GGUF is actually loaded.
   const [engine, setEngine] = useState<AppSettings['engine']>('local')
-  useEffect(() => {
-    window.taylormind.getSettings().then((s) => setEngine(s.engine))
-  }, [ai.busy])
-
-  // Poll the local engine so the user can see whether a GGUF is actually loaded.
   const [local, setLocal] = useState<{ loaded: boolean; loading: boolean }>({
     loaded: false,
     loading: false
@@ -58,7 +55,10 @@ export function Toolbar({
   useEffect(() => {
     let alive = true
     const tick = (): void => {
-      window.taylormind.localEngineStatus().then((s) => {
+      window.localmind.getSettings().then((s) => {
+        if (alive) setEngine(s.engine)
+      })
+      window.localmind.localEngineStatus().then((s) => {
         if (alive) setLocal({ loaded: s.loaded, loading: s.loading })
       })
     }
@@ -72,15 +72,15 @@ export function Toolbar({
   const localDot = engine === 'local' ? (local.loaded ? ' 🟢' : local.loading ? ' 🟡' : ' ⚪') : ''
 
   const handleOpen = async (): Promise<void> => {
-    const res = await window.taylormind.openMap()
+    const res = await window.localmind.openMap()
     if (res) setMap(res.map, res.path)
   }
   const handleSave = async (): Promise<void> => {
-    const saved = await window.taylormind.saveMap(map, filePath ?? undefined)
+    const saved = await window.localmind.saveMap(map, filePath ?? undefined)
     if (saved) markSaved(saved)
   }
   const handleSaveAs = async (): Promise<void> => {
-    const saved = await window.taylormind.saveMap(map)
+    const saved = await window.localmind.saveMap(map)
     if (saved) markSaved(saved)
   }
 
@@ -91,16 +91,16 @@ export function Toolbar({
     if (kind === 'png') {
       const dataUrl = mapToPngDataUrl(map)
       if (dataUrl) {
-        await window.taylormind.exportFile(dataUrl.split(',')[1], true, `${safeTitle}.png`, [
+        await window.localmind.exportFile(dataUrl.split(',')[1], true, `${safeTitle}.png`, [
           { name: 'PNG', extensions: ['png'] }
         ])
       }
     } else if (kind === 'md') {
-      await window.taylormind.exportFile(mapToMarkdown(map), false, `${safeTitle}.md`, [
+      await window.localmind.exportFile(mapToMarkdown(map), false, `${safeTitle}.md`, [
         { name: 'Markdown', extensions: ['md'] }
       ])
     } else {
-      await window.taylormind.exportFile(mapToHtml(map), false, `${safeTitle}.html`, [
+      await window.localmind.exportFile(mapToHtml(map), false, `${safeTitle}.html`, [
         { name: 'HTML', extensions: ['html'] }
       ])
     }
@@ -109,7 +109,7 @@ export function Toolbar({
   return (
     <div className="toolbar">
       <div className="tb-group">
-        <span className="brand">🧠 TaylorMind</span>
+        <span className="brand">🧠 LocalMind</span>
       </div>
 
       <div className="tb-group">

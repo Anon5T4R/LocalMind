@@ -44,7 +44,7 @@ export function useAiActions(): AiActions {
 
   // While a local GGUF loads, surface real progress so the user can see it work.
   useEffect(() => {
-    return window.taylormind.onLoadProgress(({ progress, phase }) => {
+    return window.localmind.onLoadProgress(({ progress, phase }) => {
       if (phase === 'context') {
         setStatusText(progress >= 1 ? baseStatus.current || 'Gerando…' : 'Preparando contexto…')
       } else {

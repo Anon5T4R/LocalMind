@@ -7,10 +7,10 @@ import type {
   MindMap,
   StreamChunk,
   StreamDone,
-  TaylorMindApi
+  LocalMindApi
 } from '../shared/types'
 
-const api: TaylorMindApi = {
+const api: LocalMindApi = {
   getSettings: () => ipcRenderer.invoke('settings:get'),
   setSettings: (patch: Partial<AppSettings>) => ipcRenderer.invoke('settings:set', patch),
 
@@ -51,14 +51,14 @@ const api: TaylorMindApi = {
   },
 
   localEngineStatus: () => ipcRenderer.invoke('ai:status') as ReturnType<
-    TaylorMindApi['localEngineStatus']
+    LocalMindApi['localEngineStatus']
   >,
   loadLocalModel: () => ipcRenderer.invoke('ai:load') as ReturnType<
-    TaylorMindApi['loadLocalModel']
+    LocalMindApi['loadLocalModel']
   >,
   unloadLocalModel: () => ipcRenderer.invoke('ai:unload') as ReturnType<
-    TaylorMindApi['unloadLocalModel']
+    LocalMindApi['unloadLocalModel']
   >
 }
 
-contextBridge.exposeInMainWorld('taylormind', api)
+contextBridge.exposeInMainWorld('localmind', api)
