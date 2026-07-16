@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useMap } from '../store'
 import type { AiActions } from '../ai/useAiActions'
+import { t, type MessageKey } from '../lib/i18n'
 
 interface Props {
   nodeId: string
@@ -8,11 +9,11 @@ interface Props {
   onClose: () => void
 }
 
-const PRESETS = [
-  'Reescreva mais curto e claro',
-  'Reescreva de forma mais técnica',
-  'Transforme em uma pergunta',
-  'Corrija e melhore o texto'
+const PRESET_KEYS: MessageKey[] = [
+  'ask.preset.shorter',
+  'ask.preset.technical',
+  'ask.preset.question',
+  'ask.preset.fix'
 ]
 
 export function AskAiModal({ nodeId, ai, onClose }: Props): JSX.Element {
@@ -29,14 +30,14 @@ export function AskAiModal({ nodeId, ai, onClose }: Props): JSX.Element {
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h2>💬 Editar bloco com IA</h2>
+        <h2>💬 {t('ask.title')}</h2>
         <p className="muted">
-          Bloco atual: <strong>{node?.text}</strong>
+          {t('ask.current')} <strong>{node?.text}</strong>
         </p>
         <textarea
           autoFocus
           rows={3}
-          placeholder="O que a IA deve fazer com este bloco? Ex: reescreva mais formal"
+          placeholder={t('ask.placeholder')}
           value={instruction}
           onChange={(e) => setInstruction(e.target.value)}
           onKeyDown={(e) => {
@@ -44,17 +45,20 @@ export function AskAiModal({ nodeId, ai, onClose }: Props): JSX.Element {
           }}
         />
         <div className="preset-row">
-          {PRESETS.map((p) => (
-            <button key={p} className="preset" onClick={() => submit(p)} disabled={ai.busy}>
-              {p}
-            </button>
-          ))}
+          {PRESET_KEYS.map((k) => {
+            const label = t(k)
+            return (
+              <button key={k} className="preset" onClick={() => submit(label)} disabled={ai.busy}>
+                {label}
+              </button>
+            )
+          })}
         </div>
         {ai.error && <div className="form-error">⚠ {ai.error}</div>}
         <div className="modal-actions">
-          <button onClick={onClose}>Cancelar</button>
+          <button onClick={onClose}>{t('common.cancel')}</button>
           <button className="primary" onClick={() => submit()} disabled={ai.busy || !instruction.trim()}>
-            {ai.busy ? 'Aplicando…' : 'Aplicar'}
+            {ai.busy ? t('ask.applying') : t('ask.apply')}
           </button>
         </div>
       </div>

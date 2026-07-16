@@ -22,6 +22,7 @@ import { ContextMenu, type MenuState } from './components/ContextMenu'
 import { AskAiModal } from './components/AskAiModal'
 import { ChatPanel } from './components/ChatPanel'
 import { useAiActions } from './ai/useAiActions'
+import { t } from './lib/i18n'
 
 const nodeTypes = { mind: MindNodeView }
 
@@ -255,7 +256,7 @@ function Canvas(): JSX.Element {
         {ai.busy && (
           <div className="ai-banner">
             {ai.statusText}
-            <button onClick={ai.cancel}>Cancelar</button>
+            <button onClick={ai.cancel}>{t('common.cancel')}</button>
           </div>
         )}
         {menu && (

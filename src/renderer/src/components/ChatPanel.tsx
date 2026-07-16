@@ -4,11 +4,7 @@ import { runAI } from '../ai/client'
 import { parseOutlineToNodes } from '../ai/prompts'
 import { useMap } from '../store'
 import type { ChatMessage } from '@shared/types'
-
-const CHAT_SYSTEM =
-  'Você é um assistente dentro de um app de mapas mentais (LocalMind). ' +
-  'Responda em português do Brasil, de forma clara e organizada. ' +
-  'Use listas e tópicos quando ajudar. Pode sugerir estruturas de mapa mental.'
+import { t } from '../lib/i18n'
 
 interface Msg {
   id: string
@@ -41,8 +37,8 @@ export function ChatPanel({ onClose }: Props): JSX.Element {
         phase === 'context'
           ? progress >= 1
             ? ''
-            : 'Preparando contexto…'
-          : `Carregando modelo… ${Math.round(progress * 100)}%`
+            : t('common.preparingContext')
+          : t('chat.loadingModel', { pct: Math.round(progress * 100) })
       )
     })
   }, [])
@@ -62,7 +58,7 @@ export function ChatPanel({ onClose }: Props): JSX.Element {
     setStatus('')
 
     const history: ChatMessage[] = [
-      { role: 'system', content: CHAT_SYSTEM },
+      { role: 'system', content: t('chat.system') },
       ...messages.map((m) => ({ role: m.role, content: m.content })),
       { role: 'user', content: text }
     ]
@@ -122,43 +118,35 @@ export function ChatPanel({ onClose }: Props): JSX.Element {
 
   return (
     <aside className="chat-panel" style={{ width }}>
-      <span className="chat-resize" onPointerDown={startResize} title="Arraste para redimensionar" />
+      <span className="chat-resize" onPointerDown={startResize} title={t('chat.resizePanel.title')} />
       <div className="chat-head">
-        <span>💬 Chat com IA</span>
+        <span>💬 {t('chat.title')}</span>
         <div className="chat-head-actions">
-          <button onClick={() => setWidth((w) => (w < 600 ? 760 : 400))} title="Ampliar / reduzir">
+          <button onClick={() => setWidth((w) => (w < 600 ? 760 : 400))} title={t('chat.resize.title')}>
             ⤢
           </button>
-          <button onClick={() => setMessages([])} title="Limpar conversa">
+          <button onClick={() => setMessages([])} title={t('chat.clear')}>
             🧹
           </button>
-          <button onClick={onClose} title="Fechar">
+          <button onClick={onClose} title={t('common.close')}>
             ✕
           </button>
         </div>
       </div>
 
       <div className="chat-body" ref={bodyRef}>
-        {messages.length === 0 && (
-          <p className="chat-empty">
-            Converse com a IA (usa o mesmo motor configurado). Peça ideias, estruturas, textos — e
-            copie ou insira no mapa.
-          </p>
-        )}
+        {messages.length === 0 && <p className="chat-empty">{t('chat.empty')}</p>}
         {messages.map((m) => (
           <div key={m.id} className={`chat-msg ${m.role}`}>
             <div className="chat-bubble">{m.content || '…'}</div>
             {m.role === 'assistant' && m.content && (
               <div className="chat-msg-actions">
-                <button onClick={() => copy(m.content)}>Copiar</button>
-                <button onClick={() => insertAsNode(m.content)} title="Adiciona como 1 nó filho do selecionado">
-                  ＋ nó
+                <button onClick={() => copy(m.content)}>{t('chat.copy')}</button>
+                <button onClick={() => insertAsNode(m.content)} title={t('chat.asNode.title')}>
+                  {t('chat.asNode')}
                 </button>
-                <button
-                  onClick={() => insertAsSubtree(m.content)}
-                  title="Insere a resposta inteira como sub-árvore (entende listas/tópicos)"
-                >
-                  ＋ ramo
+                <button onClick={() => insertAsSubtree(m.content)} title={t('chat.asBranch.title')}>
+                  {t('chat.asBranch')}
                 </button>
               </div>
             )}
@@ -170,7 +158,7 @@ export function ChatPanel({ onClose }: Props): JSX.Element {
         {status && <div className="chat-status">{status}</div>}
         <textarea
           rows={2}
-          placeholder="Escreva uma mensagem… (Enter envia, Shift+Enter quebra linha)"
+          placeholder={t('chat.composer.placeholder')}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => {
@@ -182,10 +170,10 @@ export function ChatPanel({ onClose }: Props): JSX.Element {
         />
         <div className="chat-composer-actions">
           {busy ? (
-            <button onClick={() => abortRef.current?.abort()}>Parar</button>
+            <button onClick={() => abortRef.current?.abort()}>{t('chat.stop')}</button>
           ) : (
             <button className="primary" onClick={send} disabled={!input.trim()}>
-              Enviar
+              {t('chat.send')}
             </button>
           )}
         </div>

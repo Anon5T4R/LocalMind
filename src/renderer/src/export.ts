@@ -1,5 +1,6 @@
 import type { MindMap, MindNode } from '@shared/types'
 import { layoutTree, nodeSize } from './layout'
+import { localeTag, t } from './lib/i18n'
 
 interface Tree {
   node: MindNode
@@ -40,7 +41,7 @@ export function mapToMarkdown(map: MindMap): string {
 /** Self-contained HTML page with a nested list. */
 export function mapToHtml(map: MindMap): string {
   const tree = buildTree(map)
-  if (!tree) return '<!doctype html><title>Vazio</title>'
+  if (!tree) return `<!doctype html><title>${t('export.empty')}</title>`
   const esc = (s: string): string =>
     s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!)
   const render = (t: Tree): string => {
@@ -52,7 +53,7 @@ export function mapToHtml(map: MindMap): string {
     return `<li><span class="t"${color}>${esc(t.node.text)}</span>${note}${kids}</li>`
   }
   return `<!doctype html>
-<html lang="pt-BR"><head><meta charset="utf-8">
+<html lang="${localeTag()}"><head><meta charset="utf-8">
 <title>${esc(tree.node.text)}</title>
 <style>
   body{background:#0f1115;color:#e6e9ef;font-family:Segoe UI,system-ui,sans-serif;padding:32px;line-height:1.5}

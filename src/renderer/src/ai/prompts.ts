@@ -1,8 +1,144 @@
 import type { ChatMessage, MindMap, MindNode } from '@shared/types'
+import { getLocale, t, type Locale } from '../lib/i18n'
 
-const SYSTEM = `Você é um assistente de brainstorming que estrutura ideias em mapas mentais.
+/**
+ * Natural-language prompt fragments per locale, so the MODEL answers in the UI
+ * language. IMPORTANT: the JSON contract tokens/keys ("text", "children",
+ * "items") and the exact-format examples are NOT translated — only the human
+ * text around them changes. Localized at call time via getLocale().
+ */
+interface PromptStrings {
+  system: string
+  genTaskLong: (topic: string) => string
+  genTaskShort: (topic: string) => string
+  genRules: (breadth: number, depth: number) => string
+  expandCtx: (path: string) => string
+  expandAvoid: (list: string) => string
+  expandBody: (ctx: string, count: number, text: string, avoid: string) => string
+  rephrase: (text: string, instruction: string) => string
+  explain: (path: string, text: string) => string
+  deepAvoid: (list: string) => string
+  deepBody: (path: string, text: string, breadth: number, sub: number, avoid: string) => string
+}
+
+const PROMPTS: Record<Locale, PromptStrings> = {
+  pt: {
+    system: `Você é um assistente de brainstorming que estrutura ideias em mapas mentais.
 Responda SEMPRE e SOMENTE com JSON válido, sem markdown, sem comentários, sem texto fora do JSON.
-Use português do Brasil. Mantenha cada item curto (1 a 5 palavras quando possível).`
+Use português do Brasil. Mantenha cada item curto (1 a 5 palavras quando possível).`,
+    genTaskLong: (topic) =>
+      `Organize o CONTEÚDO a seguir em um mapa mental, extraindo os temas e subtemas principais:\n\n"""${topic}"""`,
+    genTaskShort: (topic) => `Crie um mapa mental sobre o tema: "${topic}".`,
+    genRules: (breadth, depth) => `Regras:
+- O nó central ("text" da raiz) deve ser o assunto principal, curto e específico (NÃO use "Mapa mental" nem "Tema").
+- Gere cerca de ${breadth} ramos no primeiro nível, cada um com um rótulo significativo (evite genéricos como "Definição", "Importância" salvo se fizer sentido).
+- Profundidade de até ${depth} níveis. Cada item curto (1 a 5 palavras).
+Formato EXATO:
+{"text":"<tema central>","children":[{"text":"<ramo>","children":[{"text":"<subitem>"}]}]}
+Retorne apenas esse JSON.`,
+    expandCtx: (path) => `Caminho até este nó: ${path}.`,
+    expandAvoid: (list) =>
+      `\nNÃO repita nem crie sinônimos destes itens que JÁ EXISTEM no mapa: ${list}.`,
+    expandBody: (ctx, count, text, avoid) => `${ctx}
+Liste ${count} subtópicos relevantes e distintos especificamente para "${text}" (e que façam sentido dentro do caminho acima).${avoid}
+Formato EXATO: {"items":["...","...","..."]}
+Retorne apenas esse JSON.`,
+    rephrase: (text, instruction) => `Reescreva o texto do nó a seguir conforme a instrução.
+Texto: "${text}"
+Instrução: ${instruction}
+Formato EXATO: {"text":"<novo texto>"}
+Retorne apenas esse JSON.`,
+    explain: (path, text) => `Caminho: ${path}.
+Escreva UMA explicação curta (máx. 1 frase, ~12 palavras) para "${text}".
+Formato EXATO: {"text":"<explicação>"}
+Retorne apenas esse JSON.`,
+    deepAvoid: (list) => `\nNÃO repita estes itens que já existem no mapa: ${list}.`,
+    deepBody: (path, text, breadth, sub, avoid) => `Caminho até este nó: ${path}.
+Expanda "${text}" em uma sub-árvore de 2 níveis: ~${breadth} subtópicos, cada um com ~${sub} itens.${avoid}
+Itens curtos (1 a 5 palavras), específicos e distintos.
+Formato EXATO: {"children":[{"text":"<sub>","children":[{"text":"<item>"}]}]}
+Retorne apenas esse JSON.`
+  },
+  en: {
+    system: `You are a brainstorming assistant that structures ideas into mind maps.
+ALWAYS reply with ONLY valid JSON — no markdown, no comments, no text outside the JSON.
+Write in English. Keep each item short (1 to 5 words when possible).`,
+    genTaskLong: (topic) =>
+      `Organize the CONTENT below into a mind map, extracting the main themes and subthemes:\n\n"""${topic}"""`,
+    genTaskShort: (topic) => `Create a mind map about the topic: "${topic}".`,
+    genRules: (breadth, depth) => `Rules:
+- The central node (the root "text") must be the main subject, short and specific (do NOT use "Mind map" or "Topic").
+- Generate about ${breadth} branches at the first level, each with a meaningful label (avoid generic ones like "Definition", "Importance" unless it makes sense).
+- Depth of up to ${depth} levels. Each item short (1 to 5 words).
+EXACT format:
+{"text":"<central topic>","children":[{"text":"<branch>","children":[{"text":"<subitem>"}]}]}
+Return only that JSON.`,
+    expandCtx: (path) => `Path to this node: ${path}.`,
+    expandAvoid: (list) =>
+      `\nDo NOT repeat or create synonyms of these items that ALREADY EXIST in the map: ${list}.`,
+    expandBody: (ctx, count, text, avoid) => `${ctx}
+List ${count} relevant and distinct subtopics specifically for "${text}" (that make sense within the path above).${avoid}
+EXACT format: {"items":["...","...","..."]}
+Return only that JSON.`,
+    rephrase: (text, instruction) => `Rewrite the node's text below according to the instruction.
+Text: "${text}"
+Instruction: ${instruction}
+EXACT format: {"text":"<new text>"}
+Return only that JSON.`,
+    explain: (path, text) => `Path: ${path}.
+Write ONE short explanation (max. 1 sentence, ~12 words) for "${text}".
+EXACT format: {"text":"<explanation>"}
+Return only that JSON.`,
+    deepAvoid: (list) => `\nDo NOT repeat these items that already exist in the map: ${list}.`,
+    deepBody: (path, text, breadth, sub, avoid) => `Path to this node: ${path}.
+Expand "${text}" into a 2-level subtree: ~${breadth} subtopics, each with ~${sub} items.${avoid}
+Short items (1 to 5 words), specific and distinct.
+EXACT format: {"children":[{"text":"<sub>","children":[{"text":"<item>"}]}]}
+Return only that JSON.`
+  },
+  es: {
+    system: `Eres un asistente de brainstorming que estructura ideas en mapas mentales.
+Responde SIEMPRE y SOLO con JSON válido, sin markdown, sin comentarios, sin texto fuera del JSON.
+Escribe en español. Mantén cada elemento corto (1 a 5 palabras cuando sea posible).`,
+    genTaskLong: (topic) =>
+      `Organiza el CONTENIDO siguiente en un mapa mental, extrayendo los temas y subtemas principales:\n\n"""${topic}"""`,
+    genTaskShort: (topic) => `Crea un mapa mental sobre el tema: "${topic}".`,
+    genRules: (breadth, depth) => `Reglas:
+- El nodo central (el "text" de la raíz) debe ser el tema principal, corto y específico (NO uses "Mapa mental" ni "Tema").
+- Genera unas ${breadth} ramas en el primer nivel, cada una con una etiqueta significativa (evita genéricas como "Definición", "Importancia" salvo que tenga sentido).
+- Profundidad de hasta ${depth} niveles. Cada elemento corto (1 a 5 palabras).
+Formato EXACTO:
+{"text":"<tema central>","children":[{"text":"<rama>","children":[{"text":"<subelemento>"}]}]}
+Devuelve solo ese JSON.`,
+    expandCtx: (path) => `Ruta hasta este nodo: ${path}.`,
+    expandAvoid: (list) =>
+      `\nNO repitas ni crees sinónimos de estos elementos que YA EXISTEN en el mapa: ${list}.`,
+    expandBody: (ctx, count, text, avoid) => `${ctx}
+Enumera ${count} subtemas relevantes y distintos específicamente para "${text}" (y que tengan sentido dentro de la ruta anterior).${avoid}
+Formato EXACTO: {"items":["...","...","..."]}
+Devuelve solo ese JSON.`,
+    rephrase: (text, instruction) => `Reescribe el texto del nodo siguiente según la instrucción.
+Texto: "${text}"
+Instrucción: ${instruction}
+Formato EXACTO: {"text":"<nuevo texto>"}
+Devuelve solo ese JSON.`,
+    explain: (path, text) => `Ruta: ${path}.
+Escribe UNA explicación corta (máx. 1 frase, ~12 palabras) para "${text}".
+Formato EXACTO: {"text":"<explicación>"}
+Devuelve solo ese JSON.`,
+    deepAvoid: (list) => `\nNO repitas estos elementos que ya existen en el mapa: ${list}.`,
+    deepBody: (path, text, breadth, sub, avoid) => `Ruta hasta este nodo: ${path}.
+Expande "${text}" en un subárbol de 2 niveles: ~${breadth} subtemas, cada uno con ~${sub} elementos.${avoid}
+Elementos cortos (1 a 5 palabras), específicos y distintos.
+Formato EXACTO: {"children":[{"text":"<sub>","children":[{"text":"<item>"}]}]}
+Devuelve solo ese JSON.`
+  }
+}
+
+/** Prompt fragments for the current UI locale. */
+function P(): PromptStrings {
+  return PROMPTS[getLocale()]
+}
 
 /**
  * Find the first balanced {...} or [...] block starting at `from`, correctly
@@ -64,9 +200,7 @@ export function extractJson<T>(text: string): T {
       }
     }
   }
-  throw new Error(
-    'O modelo não retornou JSON válido. Resposta: ' + text.slice(0, 160).replace(/\s+/g, ' ')
-  )
+  throw new Error(t('ai.err.noJson', { resp: text.slice(0, 160).replace(/\s+/g, ' ') }))
 }
 
 interface TreeNodeJson {
@@ -76,23 +210,14 @@ interface TreeNodeJson {
 
 /** Build a prompt that asks for a whole mind map tree from a topic or full text. */
 export function buildGenerateMapMessages(topic: string, depth = 2, breadth = 4): ChatMessage[] {
+  const p = P()
   const isLongText = topic.length > 200
-  const task = isLongText
-    ? `Organize o CONTEÚDO a seguir em um mapa mental, extraindo os temas e subtemas principais:\n\n"""${topic}"""`
-    : `Crie um mapa mental sobre o tema: "${topic}".`
+  const task = isLongText ? p.genTaskLong(topic) : p.genTaskShort(topic)
   return [
-    { role: 'system', content: SYSTEM },
+    { role: 'system', content: p.system },
     {
       role: 'user',
-      content: `${task}
-
-Regras:
-- O nó central ("text" da raiz) deve ser o assunto principal, curto e específico (NÃO use "Mapa mental" nem "Tema").
-- Gere cerca de ${breadth} ramos no primeiro nível, cada um com um rótulo significativo (evite genéricos como "Definição", "Importância" salvo se fizer sentido).
-- Profundidade de até ${depth} níveis. Cada item curto (1 a 5 palavras).
-Formato EXATO:
-{"text":"<tema central>","children":[{"text":"<ramo>","children":[{"text":"<subitem>"}]}]}
-Retorne apenas esse JSON.`
+      content: `${task}\n\n${p.genRules(breadth, depth)}`
     }
   ]
 }
@@ -104,35 +229,26 @@ export function buildExpandMessages(
   existing: string[] = [],
   count = 5
 ): ChatMessage[] {
-  const context = path.length > 1 ? `Caminho até este nó: ${path.join(' › ')}.` : ''
+  const p = P()
+  const context = path.length > 1 ? p.expandCtx(path.join(' › ')) : ''
   const avoid =
-    existing.length > 0
-      ? `\nNÃO repita nem crie sinônimos destes itens que JÁ EXISTEM no mapa: ${existing
-          .map((e) => `"${e}"`)
-          .join(', ')}.`
-      : ''
+    existing.length > 0 ? p.expandAvoid(existing.map((e) => `"${e}"`).join(', ')) : ''
   return [
-    { role: 'system', content: SYSTEM },
+    { role: 'system', content: p.system },
     {
       role: 'user',
-      content: `${context}
-Liste ${count} subtópicos relevantes e distintos especificamente para "${node.text}" (e que façam sentido dentro do caminho acima).${avoid}
-Formato EXATO: {"items":["...","...","..."]}
-Retorne apenas esse JSON.`
+      content: p.expandBody(context, count, node.text, avoid)
     }
   ]
 }
 
 export function buildRephraseMessages(node: MindNode, instruction: string): ChatMessage[] {
+  const p = P()
   return [
-    { role: 'system', content: SYSTEM },
+    { role: 'system', content: p.system },
     {
       role: 'user',
-      content: `Reescreva o texto do nó a seguir conforme a instrução.
-Texto: "${node.text}"
-Instrução: ${instruction}
-Formato EXATO: {"text":"<novo texto>"}
-Retorne apenas esse JSON.`
+      content: p.rephrase(node.text, instruction)
     }
   ]
 }
@@ -185,14 +301,12 @@ export const deepExpandSchema: JsonSchema = {
 }
 
 export function buildExplainMessages(node: MindNode, path: string[]): ChatMessage[] {
+  const p = P()
   return [
-    { role: 'system', content: SYSTEM },
+    { role: 'system', content: p.system },
     {
       role: 'user',
-      content: `Caminho: ${path.join(' › ')}.
-Escreva UMA explicação curta (máx. 1 frase, ~12 palavras) para "${node.text}".
-Formato EXATO: {"text":"<explicação>"}
-Retorne apenas esse JSON.`
+      content: p.explain(path.join(' › '), node.text)
     }
   ]
 }
@@ -204,19 +318,13 @@ export function buildDeepExpandMessages(
   breadth = 4,
   sub = 3
 ): ChatMessage[] {
-  const avoid =
-    existing.length > 0
-      ? `\nNÃO repita estes itens que já existem no mapa: ${existing.map((e) => `"${e}"`).join(', ')}.`
-      : ''
+  const p = P()
+  const avoid = existing.length > 0 ? p.deepAvoid(existing.map((e) => `"${e}"`).join(', ')) : ''
   return [
-    { role: 'system', content: SYSTEM },
+    { role: 'system', content: p.system },
     {
       role: 'user',
-      content: `Caminho até este nó: ${path.join(' › ')}.
-Expanda "${node.text}" em uma sub-árvore de 2 níveis: ~${breadth} subtópicos, cada um com ~${sub} itens.${avoid}
-Itens curtos (1 a 5 palavras), específicos e distintos.
-Formato EXATO: {"children":[{"text":"<sub>","children":[{"text":"<item>"}]}]}
-Retorne apenas esse JSON.`
+      content: p.deepBody(path.join(' › '), node.text, breadth, sub, avoid)
     }
   ]
 }

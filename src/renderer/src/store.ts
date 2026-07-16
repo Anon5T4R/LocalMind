@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { nanoid } from 'nanoid'
 import type { MindMap, MindNode } from '@shared/types'
 import { resolveSides } from './layout'
+import { t } from './lib/i18n'
 
 function now(): number {
   return Date.now()
@@ -11,10 +12,10 @@ export function createEmptyMap(): MindMap {
   const rootId = nanoid(8)
   return {
     id: nanoid(8),
-    title: 'Novo mapa',
+    title: t('map.new'),
     createdAt: now(),
     updatedAt: now(),
-    nodes: [{ id: rootId, text: 'Ideia central', parentId: null }]
+    nodes: [{ id: rootId, text: t('node.central'), parentId: null }]
   }
 }
 
@@ -130,7 +131,7 @@ export const useMap = create<MapState>((set, get) => {
     getNode: (id) => get().map.nodes.find((n) => n.id === id),
     childrenOf: (id) => get().map.nodes.filter((n) => n.parentId === id),
 
-    addChild: (parentId, text = 'Novo nó', edit = true, side) => {
+    addChild: (parentId, text = t('node.new'), edit = true, side) => {
       const id = nanoid(8)
       commit(
         (nodes) =>
@@ -143,7 +144,7 @@ export const useMap = create<MapState>((set, get) => {
       return id
     },
 
-    addSibling: (siblingId, text = 'Novo nó', edit = true) => {
+    addSibling: (siblingId, text = t('node.new'), edit = true) => {
       const sib = get().getNode(siblingId)
       if (!sib || sib.parentId === null) return null
       const id = nanoid(8)

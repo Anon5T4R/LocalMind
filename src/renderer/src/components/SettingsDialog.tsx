@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { AppSettings, EngineKind, LocalModelInfo } from '@shared/types'
+import { t } from '../lib/i18n'
+import LocalePicker from './LocalePicker'
 
 interface Props {
   onClose: () => void
@@ -36,20 +38,20 @@ export function SettingsDialog({ onClose }: Props): JSX.Element {
       setLoadMsg(
         phase === 'context'
           ? progress >= 1
-            ? '✓ Modelo carregado'
-            : 'Preparando contexto…'
-          : `Carregando… ${Math.round(progress * 100)}%`
+            ? t('settings.loaded')
+            : t('common.preparingContext')
+          : t('settings.loadProgress', { pct: Math.round(progress * 100) })
       )
     })
   }, [])
 
   const handleLoad = async (): Promise<void> => {
     setLoading(true)
-    setLoadMsg('Iniciando…')
+    setLoadMsg(t('settings.starting'))
     const res = await window.localmind.loadLocalModel()
     setLoading(false)
-    if (!res.ok) setLoadMsg('⚠ ' + (res.error ?? 'Falha ao carregar'))
-    else setLoadMsg('✓ Modelo carregado')
+    if (!res.ok) setLoadMsg('⚠ ' + (res.error ?? t('settings.loadFail')))
+    else setLoadMsg(t('settings.loaded'))
   }
 
   const refreshModels = async (): Promise<void> => {
@@ -84,17 +86,20 @@ export function SettingsDialog({ onClose }: Props): JSX.Element {
   ): JSX.Element => (
     <div className="field">
       <label>
-        API Key {label} {optional && <span className="muted">(opcional)</span>}
-        {keyStatus[provider] && <span className="ok"> ✓ salva</span>}
+        {t('settings.apiKey', { label })}{' '}
+        {optional && <span className="muted">{t('settings.optional')}</span>}
+        {keyStatus[provider] && <span className="ok"> {t('settings.keySaved')}</span>}
       </label>
       <div className="row">
         <input
           type="password"
-          placeholder={keyStatus[provider] ? '•••••••• (já salva)' : 'cole sua key'}
+          placeholder={
+            keyStatus[provider] ? t('settings.keyPlaceholderSaved') : t('settings.keyPlaceholder')
+          }
           value={keyInputs[provider] ?? ''}
           onChange={(e) => setKeyInputs((s) => ({ ...s, [provider]: e.target.value }))}
         />
-        <button onClick={() => saveKey(provider)}>Salvar key</button>
+        <button onClick={() => saveKey(provider)}>{t('settings.saveKey')}</button>
       </div>
     </div>
   )
@@ -102,10 +107,15 @@ export function SettingsDialog({ onClose }: Props): JSX.Element {
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal wide" onClick={(e) => e.stopPropagation()}>
-        <h2>⚙ Configurações</h2>
+        <h2>⚙ {t('settings.title')}</h2>
 
         <div className="field">
-          <label>Motor de IA</label>
+          <label>{t('lang.title')}</label>
+          <LocalePicker />
+        </div>
+
+        <div className="field">
+          <label>{t('settings.engine')}</label>
           <select
             value={engine}
             onChange={(e) => patch({ engine: e.target.value as EngineKind })}
@@ -121,10 +131,10 @@ export function SettingsDialog({ onClose }: Props): JSX.Element {
         {engine === 'local' && (
           <div className="section">
             <div className="section-head">
-              <h3>Modelo local</h3>
+              <h3>{t('settings.localModel')}</h3>
               <div className="row">
                 <button onClick={refreshModels} disabled={loadingModels}>
-                  {loadingModels ? 'Buscando…' : '↻ Re-escanear'}
+                  {loadingModels ? t('settings.scanning') : `↻ ${t('settings.rescan')}`}
                 </button>
                 <button
                   onClick={async () => {
@@ -132,13 +142,13 @@ export function SettingsDialog({ onClose }: Props): JSX.Element {
                     if (p) patch({ localModelPath: p })
                   }}
                 >
-                  Procurar .gguf…
+                  {t('settings.browseGguf')}
                 </button>
               </div>
             </div>
             <div className="model-list">
               {models.length === 0 && !loadingModels && (
-                <p className="muted">Nenhum modelo encontrado. Use "Procurar .gguf…".</p>
+                <p className="muted">{t('settings.noModels')}</p>
               )}
               {models.map((m) => (
                 <label
@@ -160,7 +170,9 @@ export function SettingsDialog({ onClose }: Props): JSX.Element {
               ))}
             </div>
             {settings.localModelPath && (
-              <p className="muted small">Selecionado: {settings.localModelPath}</p>
+              <p className="muted small">
+                {t('settings.selected', { path: settings.localModelPath })}
+              </p>
             )}
             <div className="row" style={{ alignItems: 'center' }}>
               <button
@@ -168,23 +180,23 @@ export function SettingsDialog({ onClose }: Props): JSX.Element {
                 disabled={loading || !settings.localModelPath}
                 onClick={handleLoad}
               >
-                {loading ? 'Carregando…' : '⬇ Carregar modelo agora'}
+                {loading ? t('settings.loading') : `⬇ ${t('settings.loadNow')}`}
               </button>
               <button
                 disabled={loading}
                 onClick={async () => {
                   await window.localmind.unloadLocalModel()
-                  setLoadMsg('Modelo descarregado')
+                  setLoadMsg(t('settings.unloaded'))
                 }}
-                title="Libera a RAM/VRAM. Trocar de modelo já faz isso automaticamente."
+                title={t('settings.unload.title')}
               >
-                Descarregar
+                {t('settings.unload')}
               </button>
               {loadMsg && <span className="muted small">{loadMsg}</span>}
             </div>
             <div className="row">
               <label className="inline">
-                Contexto (tokens)
+                {t('settings.context')}
                 <input
                   type="number"
                   min={512}
@@ -195,7 +207,7 @@ export function SettingsDialog({ onClose }: Props): JSX.Element {
                 />
               </label>
               <label className="inline">
-                Camadas GPU (-1 = auto)
+                {t('settings.gpuLayers')}
                 <input
                   type="number"
                   min={-1}
@@ -211,7 +223,7 @@ export function SettingsDialog({ onClose }: Props): JSX.Element {
         {engine === 'anthropic' && (
           <div className="section">
             <ModelField
-              label="Modelo Claude"
+              label={t('settings.modelOf', { name: 'Claude' })}
               value={settings.anthropic.model}
               onChange={(model) => patch({ anthropic: { ...settings.anthropic, model } })}
             />
@@ -222,7 +234,7 @@ export function SettingsDialog({ onClose }: Props): JSX.Element {
         {engine === 'openai' && (
           <div className="section">
             <ModelField
-              label="Modelo OpenAI"
+              label={t('settings.modelOf', { name: 'OpenAI' })}
               value={settings.openai.model}
               onChange={(model) => patch({ openai: { ...settings.openai, model } })}
             />
@@ -233,7 +245,7 @@ export function SettingsDialog({ onClose }: Props): JSX.Element {
         {engine === 'gemini' && (
           <div className="section">
             <ModelField
-              label="Modelo Gemini"
+              label={t('settings.modelOf', { name: 'Gemini' })}
               value={settings.gemini.model}
               onChange={(model) => patch({ gemini: { ...settings.gemini, model } })}
             />
@@ -256,18 +268,18 @@ export function SettingsDialog({ onClose }: Props): JSX.Element {
               />
             </div>
             <ModelField
-              label="Modelo"
+              label={t('settings.model')}
               value={settings.openaiCompatible.model}
               onChange={(model) =>
                 patch({ openaiCompatible: { ...settings.openaiCompatible, model } })
               }
             />
-            {keyField('openai-compatible', '(se exigida)', true)}
+            {keyField('openai-compatible', t('settings.ifRequired'), true)}
           </div>
         )}
 
         <div className="field">
-          <label>Temperatura: {settings.temperature.toFixed(2)}</label>
+          <label>{t('settings.temperature', { value: settings.temperature.toFixed(2) })}</label>
           <input
             type="range"
             min={0}
@@ -280,7 +292,7 @@ export function SettingsDialog({ onClose }: Props): JSX.Element {
 
         <div className="modal-actions">
           <button className="primary" onClick={onClose}>
-            Fechar
+            {t('common.close')}
           </button>
         </div>
       </div>

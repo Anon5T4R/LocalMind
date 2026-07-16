@@ -2,6 +2,7 @@ import { memo, useEffect, useRef, useState } from 'react'
 import { Handle, Position, useReactFlow, type NodeProps } from '@xyflow/react'
 import { useMap } from '../store'
 import { NODE_W, type Side } from '../layout'
+import { t } from '../lib/i18n'
 
 export interface MindNodeData {
   text: string
@@ -141,40 +142,40 @@ function MindNodeViewImpl({ id, data, selected }: NodeProps) {
         <>
           <button
             className="mn-add up"
-            title="Novo ramo acima"
+            title={t('node.branchUp')}
             onClick={(e) => {
               e.stopPropagation()
-              addChild(id, 'Novo nó', true, 'up')
+              addChild(id, t('node.new'), true, 'up')
             }}
           >
             +
           </button>
           <button
             className="mn-add down"
-            title="Novo ramo abaixo"
+            title={t('node.branchDown')}
             onClick={(e) => {
               e.stopPropagation()
-              addChild(id, 'Novo nó', true, 'down')
+              addChild(id, t('node.new'), true, 'down')
             }}
           >
             +
           </button>
           <button
             className="mn-add left"
-            title="Novo ramo à esquerda"
+            title={t('node.branchLeft')}
             onClick={(e) => {
               e.stopPropagation()
-              addChild(id, 'Novo nó', true, 'left')
+              addChild(id, t('node.new'), true, 'left')
             }}
           >
             +
           </button>
           <button
             className="mn-add right"
-            title="Novo ramo à direita"
+            title={t('node.branchRight')}
             onClick={(e) => {
               e.stopPropagation()
-              addChild(id, 'Novo nó', true, 'right')
+              addChild(id, t('node.new'), true, 'right')
             }}
           >
             +
@@ -216,7 +217,7 @@ function MindNodeViewImpl({ id, data, selected }: NodeProps) {
       {d.hasChildren && (
         <button
           className={`mn-collapse${collapseLeft ? ' left' : ''}`}
-          title={d.collapsed ? 'Expandir' : 'Recolher'}
+          title={d.collapsed ? t('node.expand') : t('node.collapse')}
           onClick={(e) => {
             e.stopPropagation()
             toggleCollapse(id)
@@ -229,7 +230,7 @@ function MindNodeViewImpl({ id, data, selected }: NodeProps) {
       {selected && (
         <span
           className="mn-resize"
-          title="Arraste para mudar a largura"
+          title={t('node.resize')}
           onPointerDown={startResize}
           onClick={(e) => e.stopPropagation()}
         />

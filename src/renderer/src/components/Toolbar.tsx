@@ -3,6 +3,7 @@ import { useMap } from '../store'
 import { mapToMarkdown, mapToHtml, mapToPngDataUrl } from '../export'
 import type { AiActions } from '../ai/useAiActions'
 import type { AppSettings } from '@shared/types'
+import { t } from '../lib/i18n'
 
 const COLORS = ['#7c5cff', '#3a8dde', '#27ae60', '#e67e22', '#e74c3c', '#e84393', '']
 
@@ -14,13 +15,17 @@ interface Props {
   ai: AiActions
 }
 
-const ENGINE_LABEL: Record<AppSettings['engine'], string> = {
-  local: 'Local',
-  anthropic: 'Claude',
-  openai: 'OpenAI',
-  gemini: 'Gemini',
-  'openai-compatible': 'Compatível'
-}
+// Provider/brand names are NOT translated; only the "compatible" label word is.
+const engineLabel = (engine: AppSettings['engine']): string =>
+  engine === 'local'
+    ? 'Local'
+    : engine === 'anthropic'
+      ? 'Claude'
+      : engine === 'openai'
+        ? 'OpenAI'
+        : engine === 'gemini'
+          ? 'Gemini'
+          : t('engine.compat')
 
 export function Toolbar({
   onOpenSettings,
@@ -85,7 +90,8 @@ export function Toolbar({
   }
 
   const [exportOpen, setExportOpen] = useState(false)
-  const safeTitle = (map.title || 'mapa').replace(/[^\w\- ]+/g, '').trim() || 'mapa'
+  const fallbackTitle = t('export.defaultTitle')
+  const safeTitle = (map.title || fallbackTitle).replace(/[^\w\- ]+/g, '').trim() || fallbackTitle
   const exportAs = async (kind: 'png' | 'md' | 'html'): Promise<void> => {
     setExportOpen(false)
     if (kind === 'png') {
@@ -113,21 +119,21 @@ export function Toolbar({
       </div>
 
       <div className="tb-group">
-        <button onClick={newMap} title="Novo mapa">Novo</button>
-        <button onClick={handleOpen} title="Abrir">Abrir</button>
-        <button onClick={handleSave} title="Salvar">
-          Salvar{dirty ? ' •' : ''}
+        <button onClick={newMap} title={t('tb.new.title')}>{t('tb.new')}</button>
+        <button onClick={handleOpen} title={t('tb.open.title')}>{t('tb.open')}</button>
+        <button onClick={handleSave} title={t('tb.save.title')}>
+          {t('tb.save')}{dirty ? ' •' : ''}
         </button>
-        <button onClick={handleSaveAs} title="Salvar como">Salvar como…</button>
+        <button onClick={handleSaveAs} title={t('tb.saveAs.title')}>{t('tb.saveAs')}</button>
         <div className="dropdown">
-          <button onClick={() => setExportOpen((v) => !v)} title="Exportar">
-            Exportar ▾
+          <button onClick={() => setExportOpen((v) => !v)} title={t('tb.export.title')}>
+            {t('tb.export')} ▾
           </button>
           {exportOpen && (
             <>
               <div className="dropdown-backdrop" onClick={() => setExportOpen(false)} />
               <div className="dropdown-menu">
-                <button onClick={() => exportAs('png')}>🖼 Imagem (PNG)</button>
+                <button onClick={() => exportAs('png')}>🖼 {t('tb.export.png')}</button>
                 <button onClick={() => exportAs('md')}>📄 Markdown (.md)</button>
                 <button onClick={() => exportAs('html')}>🌐 HTML (.html)</button>
               </div>
@@ -137,16 +143,16 @@ export function Toolbar({
       </div>
 
       <div className="tb-group">
-        <button disabled={!canUndo} onClick={undo} title="Desfazer (Ctrl+Z)">↶</button>
-        <button disabled={!canRedo} onClick={redo} title="Refazer (Ctrl+Shift+Z)">↷</button>
+        <button disabled={!canUndo} onClick={undo} title={t('tb.undo.title')}>↶</button>
+        <button disabled={!canRedo} onClick={redo} title={t('tb.redo.title')}>↷</button>
       </div>
 
       <div className="tb-group">
         <button disabled={!selectedId} onClick={() => selectedId && addChild(selectedId)}>
-          + Filho
+          {t('tb.addChild')}
         </button>
         <button disabled={!selectedId} onClick={() => selectedId && deleteNode(selectedId)}>
-          Excluir
+          {t('common.delete')}
         </button>
         <div className="swatches">
           {COLORS.map((c) => (
@@ -154,7 +160,7 @@ export function Toolbar({
               key={c || 'none'}
               className={`swatch${c ? '' : ' none'}`}
               style={c ? { background: c } : undefined}
-              title={c || 'Sem cor'}
+              title={c || t('common.noColor')}
               disabled={!selectedId}
               onClick={() => selectedId && setColor(selectedId, c || undefined)}
             />
@@ -164,42 +170,28 @@ export function Toolbar({
 
       <div className="tb-group ai">
         <button className="primary" onClick={onOpenGenerate} disabled={ai.busy}>
-          ✨ Gerar mapa
+          ✨ {t('tb.generate')}
         </button>
         <button
           disabled={!selectedId || ai.busy}
           onClick={() => selectedId && ai.expandNode(selectedId)}
-          title="Gerar subtópicos com IA"
+          title={t('tb.expand.title')}
         >
-          Expandir nó
+          {t('tb.expand')}
         </button>
         <button
           className={chatOpen ? 'active' : ''}
           onClick={onToggleChat}
-          title="Abrir/fechar chat com a IA"
+          title={t('tb.chat.title')}
         >
-          💬 Chat
+          💬 {t('tb.chat')}
         </button>
       </div>
 
       <div className="tb-spacer" />
 
       <div className="tb-group">
-        <button
-          className="help"
-          title={
-            'Atalhos:\n' +
-            'Tab = novo filho\n' +
-            'Enter = novo irmão\n' +
-            'F2 = editar  ·  duplo-clique = editar\n' +
-            'Delete = excluir\n' +
-            'Espaço = recolher/expandir\n' +
-            '↑ ↓ ← → = navegar entre nós\n' +
-            'Alt+↑ / Alt+↓ = reordenar irmãos\n' +
-            'Alt+→ = indentar  ·  Alt+← = desindentar\n' +
-            'Ctrl+Z / Ctrl+Shift+Z = desfazer/refazer'
-          }
-        >
+        <button className="help" title={t('tb.help')}>
           ?
         </button>
       </div>
@@ -211,20 +203,20 @@ export function Toolbar({
           title={
             engine === 'local'
               ? local.loaded
-                ? 'Modelo local carregado'
+                ? t('tb.engine.loaded')
                 : local.loading
-                  ? 'Carregando modelo local…'
-                  : 'Modelo local não carregado (carrega na 1ª geração)'
-              : 'Configurações'
+                  ? t('tb.engine.loading')
+                  : t('tb.engine.notLoaded')
+              : t('settings.title')
           }
         >
-          ⚙ {ENGINE_LABEL[engine]}
+          ⚙ {engineLabel(engine)}
           {localDot}
         </button>
       </div>
 
       {ai.error && (
-        <div className="tb-error" onClick={ai.clearError} title="Clique para fechar">
+        <div className="tb-error" onClick={ai.clearError} title={t('tb.error.title')}>
           ⚠ {ai.error}
         </div>
       )}

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useMap } from '../store'
 import type { AiActions } from '../ai/useAiActions'
+import { t } from '../lib/i18n'
 
 const COLORS = ['#7c5cff', '#3a8dde', '#27ae60', '#e67e22', '#e74c3c', '#e84393']
 const BASE_FONT = 13.5
@@ -69,24 +70,24 @@ export function ContextMenu({ menu, ai, onAskAI, onClose }: Props): JSX.Element 
 
   return (
     <div className="ctx-menu" ref={ref} style={style}>
-      <button onClick={act(() => setEditing(id))}>✏️ Editar texto</button>
-      <button onClick={act(() => addChild(id))}>＋ Novo filho</button>
-      {!isRoot && <button onClick={act(() => addSibling(id))}>↳ Novo irmão</button>}
+      <button onClick={act(() => setEditing(id))}>✏️ {t('ctx.edit')}</button>
+      <button onClick={act(() => addChild(id))}>＋ {t('ctx.addChild')}</button>
+      {!isRoot && <button onClick={act(() => addSibling(id))}>↳ {t('ctx.addSibling')}</button>}
       <button disabled={ai.busy} onClick={act(() => ai.expandNode(id))}>
-        ✨ Expandir com IA (gerar filhos)
+        ✨ {t('ctx.expandAi')}
       </button>
       <button disabled={ai.busy} onClick={act(() => ai.deepExpandNode(id))}>
-        🌳 Expandir profundo (2 níveis)
+        🌳 {t('ctx.deepExpand')}
       </button>
       <button disabled={ai.busy} onClick={act(() => ai.explainNode(id))}>
-        🧠 Explicar (nó filho)
+        🧠 {t('ctx.explain')}
       </button>
       <button disabled={ai.busy} onClick={act(() => onAskAI(id))}>
-        💬 Editar bloco com IA…
+        💬 {t('ctx.askAi')}
       </button>
       {childCount > 0 && (
         <button onClick={act(() => toggleCollapse(id))}>
-          {node.collapsed ? '▸ Expandir ramo' : '▾ Recolher ramo'}
+          {node.collapsed ? `▸ ${t('ctx.expandBranch')}` : `▾ ${t('ctx.collapseBranch')}`}
         </button>
       )}
 
@@ -94,27 +95,27 @@ export function ContextMenu({ menu, ai, onAskAI, onClose }: Props): JSX.Element 
         <>
           <div className="ctx-sep" />
           <div className="ctx-row">
-            <span className="ctx-label">Lado</span>
-            <button className="mini" title="Esquerda" onClick={act(() => setSide(id, 'left'))}>⬅</button>
-            <button className="mini" title="Direita" onClick={act(() => setSide(id, 'right'))}>➡</button>
-            <button className="mini" title="Cima" onClick={act(() => setSide(id, 'up'))}>⬆</button>
-            <button className="mini" title="Baixo" onClick={act(() => setSide(id, 'down'))}>⬇</button>
+            <span className="ctx-label">{t('ctx.side')}</span>
+            <button className="mini" title={t('ctx.side.left')} onClick={act(() => setSide(id, 'left'))}>⬅</button>
+            <button className="mini" title={t('ctx.side.right')} onClick={act(() => setSide(id, 'right'))}>➡</button>
+            <button className="mini" title={t('ctx.side.up')} onClick={act(() => setSide(id, 'up'))}>⬆</button>
+            <button className="mini" title={t('ctx.side.down')} onClick={act(() => setSide(id, 'down'))}>⬇</button>
           </div>
         </>
       )}
 
       <div className="ctx-sep" />
       <div className="ctx-row">
-        <span className="ctx-label">Fonte</span>
+        <span className="ctx-label">{t('ctx.font')}</span>
         <button className="mini" onClick={() => bumpFont(-2)}>A−</button>
         <button className="mini" onClick={() => bumpFont(2)}>A+</button>
-        <button className="mini" onClick={() => setWidth(id, undefined)} title="Largura padrão">
+        <button className="mini" onClick={() => setWidth(id, undefined)} title={t('ctx.widthReset')}>
           ↔ reset
         </button>
       </div>
 
       <div className="ctx-row swatches">
-        <span className="ctx-label">Cor</span>
+        <span className="ctx-label">{t('ctx.color')}</span>
         {COLORS.map((c) => (
           <button
             key={c}
@@ -123,14 +124,14 @@ export function ContextMenu({ menu, ai, onAskAI, onClose }: Props): JSX.Element 
             onClick={act(() => setColor(id, c))}
           />
         ))}
-        <button className="swatch none" title="Sem cor" onClick={act(() => setColor(id, undefined))} />
+        <button className="swatch none" title={t('common.noColor')} onClick={act(() => setColor(id, undefined))} />
       </div>
 
       {!isRoot && (
         <>
           <div className="ctx-sep" />
           <button className="danger" onClick={act(() => deleteNode(id))}>
-            🗑 Excluir
+            🗑 {t('common.delete')}
           </button>
         </>
       )}

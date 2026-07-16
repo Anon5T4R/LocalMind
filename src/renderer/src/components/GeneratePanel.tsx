@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { AiActions } from '../ai/useAiActions'
+import { t } from '../lib/i18n'
 
 interface Props {
   ai: AiActions
@@ -20,15 +21,12 @@ export function GeneratePanel({ ai, onClose }: Props): JSX.Element {
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h2>✨ Gerar mapa mental</h2>
-        <p className="muted">
-          Escreva um tema OU cole um texto inteiro (artigo, anotações, resumo). A IA monta a árvore
-          completa — isso substitui o mapa atual.
-        </p>
+        <h2>✨ {t('gen.title')}</h2>
+        <p className="muted">{t('gen.desc')}</p>
         <textarea
           autoFocus
           rows={6}
-          placeholder="Ex: 'Estratégia de lançamento de um app'  —  ou cole um texto longo para a IA estruturar em mapa."
+          placeholder={t('gen.placeholder')}
           value={topic}
           onChange={(e) => setTopic(e.target.value)}
           onKeyDown={(e) => {
@@ -37,7 +35,7 @@ export function GeneratePanel({ ai, onClose }: Props): JSX.Element {
         />
         <div className="row">
           <label>
-            Profundidade
+            {t('gen.depth')}
             <input
               type="number"
               min={1}
@@ -47,7 +45,7 @@ export function GeneratePanel({ ai, onClose }: Props): JSX.Element {
             />
           </label>
           <label>
-            Ramos
+            {t('gen.breadth')}
             <input
               type="number"
               min={2}
@@ -59,12 +57,12 @@ export function GeneratePanel({ ai, onClose }: Props): JSX.Element {
         </div>
         {ai.error && <div className="form-error">⚠ {ai.error}</div>}
         <div className="modal-actions">
-          <button onClick={onClose}>Cancelar</button>
+          <button onClick={onClose}>{t('common.cancel')}</button>
           <button className="primary" onClick={submit} disabled={ai.busy || !topic.trim()}>
-            {ai.busy ? 'Gerando…' : 'Gerar'}
+            {ai.busy ? t('gen.generating') : t('gen.generate')}
           </button>
         </div>
-        <p className="hint">Dica: Ctrl+Enter para gerar.</p>
+        <p className="hint">{t('gen.hint')}</p>
       </div>
     </div>
   )

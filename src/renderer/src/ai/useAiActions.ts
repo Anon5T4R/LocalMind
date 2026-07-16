@@ -21,6 +21,7 @@ import {
   type TreeNodeJson
 } from './prompts'
 import type { MindMap } from '@shared/types'
+import { t } from '../lib/i18n'
 
 export interface AiActions {
   busy: boolean
@@ -46,9 +47,11 @@ export function useAiActions(): AiActions {
   useEffect(() => {
     return window.localmind.onLoadProgress(({ progress, phase }) => {
       if (phase === 'context') {
-        setStatusText(progress >= 1 ? baseStatus.current || 'Gerando…' : 'Preparando contexto…')
+        setStatusText(
+          progress >= 1 ? baseStatus.current || t('gen.generating') : t('common.preparingContext')
+        )
       } else {
-        setStatusText(`Carregando modelo… ${Math.round(progress * 100)}%`)
+        setStatusText(t('chat.loadingModel', { pct: Math.round(progress * 100) }))
       }
     })
   }, [])
@@ -82,16 +85,16 @@ export function useAiActions(): AiActions {
 
   const generateMap = useCallback(
     async (topic: string, depth = 2, breadth = 4) => {
-      await run('Gerando mapa…', async (signal) => {
+      await run(t('ai.status.generatingMap'), async (signal) => {
         const text = await runAI(buildGenerateMapMessages(topic, depth, breadth), {
           json: true,
           jsonSchema: mapSchema(depth),
           signal,
-          onText: () => setStatusText('Gerando mapa…')
+          onText: () => setStatusText(t('ai.status.generatingMap'))
         })
         const tree = extractJson<TreeNodeJson>(text)
         const nodes = treeToNodes(tree, null, () => nanoid(8))
-        if (nodes.length === 0) throw new Error('Modelo não retornou nós.')
+        if (nodes.length === 0) throw new Error(t('ai.err.noNodes'))
         const map: MindMap = {
           ...createEmptyMap(),
           title: topic.slice(0, 60),
@@ -112,7 +115,7 @@ export function useAiActions(): AiActions {
       // Global context: every other node's text, so it doesn't duplicate
       // anything already present anywhere in the map.
       const existing = allTexts(state.map, new Set([nodeId]))
-      await run(`Expandindo "${node.text}"…`, async (signal) => {
+      await run(t('ai.status.expanding', { text: node.text }), async (signal) => {
         const text = await runAI(buildExpandMessages(node, path, existing, count), {
           json: true,
           jsonSchema: expandSchema,
@@ -120,7 +123,7 @@ export function useAiActions(): AiActions {
         })
         const parsed = extractJson<{ items: string[] }>(text)
         const items = (parsed.items ?? []).filter((s) => typeof s === 'string' && s.trim())
-        if (items.length === 0) throw new Error('Nenhum subtópico retornado.')
+        if (items.length === 0) throw new Error(t('ai.err.noSubtopics'))
         useMap.getState().addChildren(nodeId, items)
         // Make sure the expanded node is visible (uncollapse).
         if (useMap.getState().getNode(nodeId)?.collapsed) {
@@ -138,7 +141,7 @@ export function useAiActions(): AiActions {
       if (!node) return
       const path = nodePath(state.map, nodeId)
       const existing = allTexts(state.map, new Set([nodeId]))
-      await run(`Expandindo "${node.text}" em profundidade…`, async (signal) => {
+      await run(t('ai.status.deepExpanding', { text: node.text }), async (signal) => {
         const text = await runAI(buildDeepExpandMessages(node, path, existing), {
           json: true,
           jsonSchema: deepExpandSchema,
@@ -148,7 +151,7 @@ export function useAiActions(): AiActions {
           text
         )
         const nodes = deepToNodes(data, nodeId, () => nanoid(8))
-        if (nodes.length === 0) throw new Error('Nada gerado.')
+        if (nodes.length === 0) throw new Error(t('ai.err.nothing'))
         useMap.getState().addNodes(nodes, nodeId)
       })
     },
@@ -161,7 +164,7 @@ export function useAiActions(): AiActions {
       const node = state.getNode(nodeId)
       if (!node) return
       const path = nodePath(state.map, nodeId)
-      await run(`Explicando "${node.text}"…`, async (signal) => {
+      await run(t('ai.status.explaining', { text: node.text }), async (signal) => {
         const text = await runAI(buildExplainMessages(node, path), {
           json: true,
           jsonSchema: explainSchema,
@@ -179,7 +182,7 @@ export function useAiActions(): AiActions {
       const state = useMap.getState()
       const node = state.getNode(nodeId)
       if (!node) return
-      await run('Reescrevendo…', async (signal) => {
+      await run(t('ai.status.rephrasing'), async (signal) => {
         const text = await runAI(buildRephraseMessages(node, instruction), {
           json: true,
           jsonSchema: rephraseSchema,
