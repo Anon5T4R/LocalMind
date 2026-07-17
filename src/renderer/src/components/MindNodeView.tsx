@@ -93,7 +93,11 @@ function MindNodeViewImpl({ id, data, selected }: NodeProps) {
     window.addEventListener('pointerup', onUp)
   }
 
-  const accent = d.color || (d.isRoot ? '#7c5cff' : '#3a8dde')
+  // Cor do nó: a escolhida pelo usuário; sem cor, segue o tema (accent na raiz,
+  // accent-2 nos demais). Override por elemento de --accent — nunca com
+  // var(--accent) (auto-referência é ciclo em custom property), por isso a raiz
+  // sem cor simplesmente herda o valor do :root.
+  const accentOverride = d.color || (d.isRoot ? null : 'var(--accent-2)')
   const width = dragW ?? d.width ?? NODE_W
   const collapseLeft = d.side === 'left'
 
@@ -102,8 +106,8 @@ function MindNodeViewImpl({ id, data, selected }: NodeProps) {
       className={`mind-node${selected ? ' selected' : ''}${d.isRoot ? ' root' : ''}`}
       style={{
         width,
-        borderColor: selected ? accent : 'transparent',
-        ['--accent' as string]: accent
+        borderColor: selected ? 'var(--accent)' : 'transparent',
+        ...(accentOverride ? { ['--accent' as string]: accentOverride } : {})
       }}
       onDoubleClick={() => setEditing(true)}
     >
@@ -183,7 +187,7 @@ function MindNodeViewImpl({ id, data, selected }: NodeProps) {
         </>
       )}
 
-      <span className="mn-bar" style={{ background: accent }} />
+      <span className="mn-bar" style={{ background: 'var(--accent)' }} />
 
       {editing ? (
         <textarea

@@ -35,6 +35,13 @@ const LOCALE_KEY = 'localmind.locale'
 const pt = {
   // --- comuns ---
   'lang.title': 'Idioma',
+  'theme.title': 'Tema',
+  'theme.default': 'Escuro (padrão)',
+  'theme.nature': 'Natureza',
+  'theme.darkblue': 'Azul escuro',
+  'theme.calmgreen': 'Verde calmo',
+  'theme.pastelpink': 'Rosa pastel',
+  'theme.punkprincess': 'PunkPrincess',
   'common.close': 'Fechar',
   'common.cancel': 'Cancelar',
   'common.delete': 'Excluir',
@@ -204,6 +211,13 @@ export type MessageKey = keyof typeof pt
 
 const en: Record<MessageKey, string> = {
   'lang.title': 'Language',
+  'theme.title': 'Theme',
+  'theme.default': 'Dark (default)',
+  'theme.nature': 'Nature',
+  'theme.darkblue': 'Dark blue',
+  'theme.calmgreen': 'Calm green',
+  'theme.pastelpink': 'Pastel pink',
+  'theme.punkprincess': 'PunkPrincess',
   'common.close': 'Close',
   'common.cancel': 'Cancel',
   'common.delete': 'Delete',
@@ -362,6 +376,13 @@ const en: Record<MessageKey, string> = {
 
 const es: Record<MessageKey, string> = {
   'lang.title': 'Idioma',
+  'theme.title': 'Tema',
+  'theme.default': 'Oscuro (predeterminado)',
+  'theme.nature': 'Naturaleza',
+  'theme.darkblue': 'Azul oscuro',
+  'theme.calmgreen': 'Verde tranquilo',
+  'theme.pastelpink': 'Rosa pastel',
+  'theme.punkprincess': 'PunkPrincess',
   'common.close': 'Cerrar',
   'common.cancel': 'Cancelar',
   'common.delete': 'Eliminar',

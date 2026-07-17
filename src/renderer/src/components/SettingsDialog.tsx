@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { AppSettings, EngineKind, LocalModelInfo } from '@shared/types'
 import { t } from '../lib/i18n'
 import LocalePicker from './LocalePicker'
+import ThemePicker from './ThemePicker'
 
 interface Props {
   onClose: () => void
@@ -112,6 +113,11 @@ export function SettingsDialog({ onClose }: Props): JSX.Element {
         <div className="field">
           <label>{t('lang.title')}</label>
           <LocalePicker />
+        </div>
+
+        <div className="field">
+          <label>{t('theme.title')}</label>
+          <ThemePicker />
         </div>
 
         <div className="field">

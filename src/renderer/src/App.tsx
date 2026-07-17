@@ -241,16 +241,16 @@ function Canvas(): JSX.Element {
           defaultEdgeOptions={{ type: 'smoothstep' }}
           proOptions={{ hideAttribution: true }}
         >
-          <Background gap={24} size={1} color="#222733" />
+          <Background gap={24} size={1} color="var(--canvas-dots)" />
           <Controls showInteractive={false} />
           <MiniMap
             pannable
             zoomable
-            bgColor="#161a22"
-            nodeColor="#2a3550"
-            nodeStrokeColor="#3a4456"
-            maskColor="rgba(10,12,16,0.6)"
-            style={{ backgroundColor: '#161a22' }}
+            bgColor="var(--bg-2)"
+            nodeColor="var(--minimap-node)"
+            nodeStrokeColor="var(--minimap-node-stroke)"
+            maskColor="var(--minimap-mask)"
+            style={{ backgroundColor: 'var(--bg-2)' }}
           />
         </ReactFlow>
         {ai.busy && (
