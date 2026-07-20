@@ -50,13 +50,28 @@ interface Indexed {
   rootId: string | null
 }
 
+/**
+ * A raiz do mapa: o PRIMEIRO nó sem pai.
+ *
+ * Existe pra ser a única resposta pra essa pergunta. Antes o layout pegava a
+ * ÚLTIMA raiz (o laço do `index` sobrescrevia `rootId` sem parar) e o export
+ * pegava a PRIMEIRA (`.find`) — com dois nós de `parentId: null`, que uma
+ * importação ruim ou um merge de mapas produz, a tela desenhava uma árvore e o
+ * arquivo exportado gravava outra, sem aviso nenhum.
+ *
+ * "Primeiro" e não "último" porque é o que a ordem do arquivo já sugere e o
+ * que o export sempre fez — mudar o layout é a metade que ninguém percebe.
+ */
+export function findRoot(nodes: MindNode[]): MindNode | null {
+  return nodes.find((n) => n.parentId === null) ?? null
+}
+
 function index(nodes: MindNode[]): Indexed {
   const byId = new Map(nodes.map((n) => [n.id, n]))
   const children = new Map<string, string[]>()
-  let rootId: string | null = null
+  const rootId: string | null = findRoot(nodes)?.id ?? null
   for (const n of nodes) {
-    if (n.parentId === null) rootId = n.id
-    else {
+    if (n.parentId !== null) {
       const arr = children.get(n.parentId) ?? []
       arr.push(n.id)
       children.set(n.parentId, arr)
@@ -100,7 +115,11 @@ function computeSides(idx: Indexed): Map<string, Side> {
     } else {
       side = rightLoad <= leftLoad ? 'right' : 'left'
     }
-    // Only auto L/R contribute to the balance counters.
+    // Lado EXPLÍCITO também conta. Decidido em 2026-07-20: o comentário antigo
+    // dizia o contrário do que o código faz ("only auto L/R contribute"), e
+    // quem está certo é o código — um filho marcado à mão ocupa espaço real
+    // naquele lado, então os automáticos seguintes têm que se equilibrar
+    // contra ele. Ignorá-lo empilharia os automáticos em cima do explícito.
     if (side === 'left') leftLoad += 1
     else if (side === 'right') rightLoad += 1
     sides.set(kid, side)

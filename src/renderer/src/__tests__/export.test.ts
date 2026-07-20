@@ -87,3 +87,38 @@ describe('mapToHtml', () => {
     expect(html).not.toContain('<ul>')
   })
 })
+
+/**
+ * Os dois consertos de 2026-07-20 no export. Ambos eram silenciosos: o arquivo
+ * saía, parecia certo, e faltava coisa dentro.
+ */
+describe('achados de 2026-07-20', () => {
+  // O `walk` do markdown e o `render` do html só visitam FILHOS, então a nota
+  // escrita no nó central simplesmente não saía em lugar nenhum.
+  it('a nota da raiz aparece no markdown', () => {
+    const md = mapToMarkdown(map([node('R', null, { note: 'contexto' }), node('C', 'R')]))
+    expect(md).toContain('_contexto_')
+  })
+
+  it('a nota da raiz aparece no html, escapada como as outras', () => {
+    const html = mapToHtml(map([node('R', null, { note: '<b>x</b>' })]))
+    expect(html).toContain('&lt;b&gt;x&lt;/b&gt;')
+    expect(html).not.toContain('<b>x</b>')
+  })
+
+  it('raiz sem nota nao emite marcacao vazia', () => {
+    expect(mapToMarkdown(map([node('R', null)]))).toBe('# R\n\n')
+    expect(mapToHtml(map([node('R', null)]))).not.toContain('<p class="note">')
+  })
+
+  /**
+   * Raiz duplicada: o layout pegava a ÚLTIMA e o export a PRIMEIRA, então a
+   * tela e o arquivo discordavam. Agora os dois passam por `findRoot`, que
+   * escolhe a PRIMEIRA. Este teste fixa a escolha — se alguém trocar por
+   * "última" num dos lados, os dois voltam a divergir.
+   */
+  it('com duas raizes o export usa a PRIMEIRA, igual ao layout', () => {
+    const md = mapToMarkdown(map([node('R1', null), node('R2', null), node('C', 'R1')]))
+    expect(md.startsWith('# R1')).toBe(true)
+  })
+})

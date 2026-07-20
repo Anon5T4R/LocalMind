@@ -1,6 +1,6 @@
 {
   "name": "localmind",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "description": "AI-powered mind mapping (XMind/SimpleMind clone) with local & remote LLMs",
   "main": "./out/main/index.js",
   "author": "joaof",

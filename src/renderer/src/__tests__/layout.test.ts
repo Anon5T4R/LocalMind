@@ -245,3 +245,23 @@ describe('hiddenIds', () => {
     expect(hiddenIds([node('r', null), node('a', 'r')]).size).toBe(0)
   })
 })
+
+/**
+ * A outra metade do conserto de 2026-07-20: o layout pegava a ÚLTIMA raiz
+ * (o laço do `index` sobrescrevia sem parar) e o export a PRIMEIRA. Com duas
+ * raízes — que importação ruim ou merge de mapas produz — a tela desenhava uma
+ * árvore e o arquivo exportado gravava outra, sem aviso.
+ *
+ * Os dois agora passam por `findRoot`. O par de testes (aqui e em
+ * export.test.ts) é o que impede a divergência de voltar: consertar só um lado
+ * é exatamente como o bug nasceu.
+ */
+describe('raiz duplicada', () => {
+  it('o layout usa a PRIMEIRA raiz, igual ao export', () => {
+    const nodes = [node('R1', null), node('R2', null), node('C', 'R1')]
+    const { positions } = layoutTree(nodes)
+    expect(positions.has('R1')).toBe(true)
+    expect(positions.has('C')).toBe(true)
+    expect(positions.has('R2')).toBe(false)
+  })
+})

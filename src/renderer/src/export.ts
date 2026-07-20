@@ -1,5 +1,5 @@
 import type { MindMap, MindNode } from '@shared/types'
-import { layoutTree, nodeSize } from './layout'
+import { findRoot, layoutTree, nodeSize } from './layout'
 import { localeTag, t } from './lib/i18n'
 
 interface Tree {
@@ -14,7 +14,9 @@ function buildTree(map: MindMap): Tree | null {
     arr.push(n)
     byParent.set(n.parentId, arr)
   }
-  const root = map.nodes.find((n) => n.parentId === null)
+  // Mesma raiz que o layout usa — ver `findRoot`. Duas respostas diferentes pra
+  // "qual é a raiz" faziam a tela e o arquivo exportado discordarem.
+  const root = findRoot(map.nodes)
   if (!root) return null
   const make = (n: MindNode): Tree => ({
     node: n,
@@ -27,7 +29,10 @@ function buildTree(map: MindMap): Tree | null {
 export function mapToMarkdown(map: MindMap): string {
   const tree = buildTree(map)
   if (!tree) return ''
+  // A nota da RAIZ tem que sair aqui: o `walk` abaixo só visita os filhos,
+  // então a nota do nó central se perdia no export — calada.
   const lines: string[] = [`# ${tree.node.text}`, '']
+  if (tree.node.note) lines.push(`_${tree.node.note}_`, '')
   const walk = (t: Tree, depth: number): void => {
     for (const c of t.children) {
       lines.push(`${'  '.repeat(depth)}- ${c.node.text}${c.node.note ? ` — _${c.node.note}_` : ''}`)
@@ -63,7 +68,9 @@ export function mapToHtml(map: MindMap): string {
   .t{display:inline-block;background:#1b2029;border:1px solid #2a3140;border-left:4px solid #3a8dde;border-radius:8px;padding:4px 10px}
   .note{color:#8a93a6;font-size:.85em;margin-left:8px}
 </style></head>
-<body><h1>${esc(tree.node.text)}</h1><ul>${tree.children.map(render).join('')}</ul></body></html>`
+<body><h1>${esc(tree.node.text)}</h1>${
+    tree.node.note ? `<p class="note">${esc(tree.node.note)}</p>` : ''
+  }<ul>${tree.children.map(render).join('')}</ul></body></html>`
 }
 
 /** Render the map to a PNG data URL by drawing the layout onto a canvas. */
