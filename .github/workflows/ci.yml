@@ -1,0 +1,34 @@
+name: CI
+
+# O `release.yml` só dispara em TAG. O script `typecheck` já existia aqui, mas
+# não havia nada que o rodasse: erro de tipo só apareceria no release.
+#
+# Este é um app Electron (não Tauri), então não há `src-tauri` nem cargo — o
+# equivalente ao `cargo test` da suíte é o typecheck dos dois tsconfig
+# (processo principal e renderer).
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  check-linux:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install JS deps
+        run: npm ci
+
+      - name: Typecheck (main + renderer)
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
